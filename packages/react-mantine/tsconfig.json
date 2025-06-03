@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "declaration": true,
+    "declarationMap": true, // Optional, but can be helpful
+    "sourceMap": true, // For JS outputs, not directly for DTS but good practice
+    "outDir": "./dist", // tsup will use this as a base for its own output structure
+    "rootDir": "./src", // Important for structure
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": false // CRITICAL CHANGE: ensure this is false for .d.ts generation by tsc
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}

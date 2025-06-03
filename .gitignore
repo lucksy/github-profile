@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+dist
+.DS_Store
+
+# PNPM
+.pnpm-debug.log
+pnpm-lock.yaml
+
+# Build artifacts
+/dist
+/coverage
+*.log
+
+# IDE
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
