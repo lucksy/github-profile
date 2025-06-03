@@ -1,77 +1,84 @@
-import type { GitHubData, GitHubRepo } from './github-api';
-import type { ProfileSummaryData, GitHubMetricsData, LanguageUsageStat, TopReposData } from './card-types';
+import type { GitHubUser, GitHubRepo, LanguageStats, ProfileSummaryData, GitHubMetricsData, TopReposData } from './card-types';
+// LanguageUsageStat might be replaced by LanguageStats depending on the outcome of getLanguageUsageStats
 
 /**
  * Extracts and returns data needed for the Profile Summary Card.
  */
-export function getProfileSummary(data: GitHubData): ProfileSummaryData {
+export function getProfileSummary(user: GitHubUser): ProfileSummaryData {
   return {
-    avatar_url: data.user.avatar_url,
-    name: data.user.name,
-    login: data.user.login,
-    bio: data.user.bio,
-    location: data.user.location,
-    followers: data.user.followers,
-    html_url: data.user.html_url,
+    avatar_url: user.avatar_url,
+    name: user.name,
+    login: user.login,
+    bio: user.bio,
+    location: user.location,
+    followers: user.followers,
+    html_url: user.html_url,
   };
 }
 
 /**
  * Extracts and returns data for the GitHub Metrics Card.
  */
-export function getGitHubMetrics(data: GitHubData): GitHubMetricsData {
-  const total_stars_on_top_repos = data.repos.reduce((sum, repo) => sum + repo.stargazers_count, 0);
+export function getGitHubMetrics(user: GitHubUser, repos: GitHubRepo[]): GitHubMetricsData {
+  const total_stars_on_top_repos = repos.reduce((sum, repo) => sum + repo.stargazers_count, 0);
   return {
-    public_repos: data.user.public_repos,
-    followers: data.user.followers,
-    following: data.user.following,
+    public_repos: user.public_repos,
+    followers: user.followers,
+    following: user.following,
     total_stars_on_top_repos,
   };
 }
 
 /**
  * Processes repository data for the Top Repos Card.
- * For now, this function selects specific fields.
+ * This function maps the raw repo data to the fields defined in TopReposData (via RepoDisplayData).
  */
-export function getTopReposData(repos: GitHubRepo[]): TopReposData {
+export function getTopRepos(repos: GitHubRepo[]): TopReposData {
   return repos.map(repo => ({
+    // Map to the fields expected by RepoDisplayData, which TopReposData uses.
+    // id is not in RepoDisplayData, so it's removed if TopReposData strictly follows RepoGridDisplayData -> RepoDisplayData.
+    // However, TopReposData was originally defined as Array<Pick<GitHubRepo, 'name' | 'description' | 'stargazers_count' | 'language' | 'html_url' | 'id'>>;
+    // The current card-types.ts has TopReposData = RepoGridDisplayData, and RepoGridDisplayData.repos is Array<RepoDisplayData>.
+    // RepoDisplayData now includes id.
     id: repo.id,
     name: repo.name,
     description: repo.description,
     stargazers_count: repo.stargazers_count,
+    forks_count: repo.forks_count, // forks_count is in GitHubRepo and RepoDisplayData
     language: repo.language,
     html_url: repo.html_url,
   }));
+  // Since TopReposData is an alias for RepoGridDisplayData, the return type should be { repos: Array<RepoDisplayData> }
+  return { repos: mappedRepos };
 }
 
 
 /**
  * Calculates language usage statistics from a list of repositories.
- * Note: This currently relies on the primary `language` field of each repo.
+ * This version will fetch detailed language data for each repository.
  * Common language colors can be added here or by the UI components.
  */
-export function getLanguageUsage(repos: GitHubRepo[]): LanguageUsageStat[] {
-  const langStats: Record<string, { count: number }> = {};
+export async function getLanguageUsageStats(
+  repos: GitHubRepo[],
+  fetchFn: (url: string, token?: string) => Promise<Record<string, number>>,
+  token?: string
+): Promise<LanguageStats> {
+  const aggregatedLanguageStats: LanguageStats = {};
 
   for (const repo of repos) {
-    if (repo.language) {
-      if (!langStats[repo.language]) {
-        langStats[repo.language] = { count: 0 };
+    if (repo.languages_url) {
+      try {
+        const repoLanguages = await fetchFn(repo.languages_url, token);
+        for (const [lang, bytes] of Object.entries(repoLanguages)) {
+          aggregatedLanguageStats[lang] = (aggregatedLanguageStats[lang] || 0) + bytes;
+        }
+      } catch (error) {
+        console.error(`Error fetching languages for repo ${repo.name}:`, error);
+        // Optionally, continue to next repo or handle error differently
       }
-      langStats[repo.language].count++;
     }
   }
-
-  const sortedLangStats = Object.entries(langStats)
-    .sort(([, a], [, b]) => b.count - a.count)
-    .map(([language, { count }]) => ({
-      language,
-      count,
-      // Basic color mapping - can be expanded or moved to UI
-      color: getLanguageColor(language),
-    }));
-
-  return sortedLangStats;
+  return aggregatedLanguageStats;
 }
 
 /**

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Profile Cards - Web Components Demo</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; background-color: #f4f4f4; padding: 20px; color: #333; }
+    .container { max-width: 800px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #333; }
+    .input-section { margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
+    .input-section input[type="text"] { padding: 10px; border: 1px solid #ddd; border-radius: 4px; flex-grow: 1; }
+    .input-section button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .input-section button:hover { background-color: #0056b3; }
+    .cards-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+    .card-container { border: 1px solid #eee; padding: 15px; border-radius: 6px; background-color: #f9f9f9; }
+    .card-container h2 { margin-top: 0; font-size: 1.2em; color: #555; }
+    /* Ensure web components take up space if they don't have explicit sizing */
+    profile-card-wc, language-usage-card-wc, single-repo-card-wc { display: block; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>GitHub Profile Cards - Web Components Demo</h1>
+
+    <div class="input-section">
+      <input type="text" id="usernameInput" placeholder="Enter GitHub username (e.g., webcomponents)" value="webcomponents">
+      <button id="loadButton">Load Cards</button>
+      <button id="mockUserButton">Use "mockuser"</button>
+    </div>
+
+    <div class="token-section" style="margin-bottom: 20px;">
+        <input type="password" id="tokenInput" placeholder="Optional GitHub Token" style="width: calc(100% - 22px); padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+        <p style="font-size: 0.8em; color: #666;">A GitHub token can increase API rate limits and access private repo data if the token has rights. For development only.</p>
+    </div>
+
+
+    <div id="cardsHost" class="cards-grid">
+      <!-- Web components will be dynamically updated -->
+      <div class="card-container">
+        <h2>Profile Summary</h2>
+        <profile-card-wc username="webcomponents" variant="summary"></profile-card-wc>
+      </div>
+      <div class="card-container">
+        <h2>Profile Metrics</h2>
+        <profile-card-wc username="webcomponents" variant="metrics"></profile-card-wc>
+      </div>
+      <div class="card-container">
+        <h2>Top Repos</h2>
+        <profile-card-wc username="webcomponents" variant="repos"></profile-card-wc>
+      </div>
+      <div class="card-container">
+        <h2>Contributions</h2>
+        <profile-card-wc username="webcomponents" variant="contributions"></profile-card-wc>
+      </div>
+      <div class="card-container">
+        <h2>Language Usage</h2>
+        <language-usage-card-wc username="webcomponents"></language-usage-card-wc>
+      </div>
+      <div class="card-container">
+        <h2>Single Repo (e.g., "gold-standard" for "webcomponents")</h2>
+        <single-repo-card-wc username="webcomponents" repo-name="gold-standard"></single-repo-card-wc>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import the web components bundle to register them
+    import '@github-profile-cards/web-components';
+
+    const usernameInput = document.getElementById('usernameInput');
+    const tokenInput = document.getElementById('tokenInput');
+    const loadButton = document.getElementById('loadButton');
+    const mockUserButton = document.getElementById('mockUserButton');
+    // Hardcode repo name for demo, or add another input for it.
+    const defaultRepoNameForDemo = "gold-standard";
+
+    const cardsHost = document.getElementById('cardsHost');
+
+    // Function to generate live components HTML, now including single repo card
+    function getLiveComponentsHTML(username, repoName) {
+      return `
+        <div class="card-container">
+          <h2>Profile Summary</h2>
+          <profile-card-wc username="${username}" variant="summary"></profile-card-wc>
+        </div>
+        <div class="card-container">
+          <h2>Profile Metrics</h2>
+          <profile-card-wc username="${username}" variant="metrics"></profile-card-wc>
+        </div>
+        <div class="card-container">
+          <h2>Top Repos</h2>
+          <profile-card-wc username="${username}" variant="repos"></profile-card-wc>
+        </div>
+        <div class="card-container">
+          <h2>Contributions</h2>
+          <profile-card-wc username="${username}" variant="contributions"></profile-card-wc>
+        </div>
+        <div class="card-container">
+          <h2>Language Usage</h2>
+          <language-usage-card-wc username="${username}"></language-usage-card-wc>
+        </div>
+        <div class="card-container">
+          <h2>Single Repo (${repoName})</h2>
+          <single-repo-card-wc username="${username}" repo-name="${repoName}"></single-repo-card-wc>
+        </div>
+      `;
+    }
+
+    const initialUsername = usernameInput.value || "webcomponents";
+    // Using a fixed repo name for the initial load of the single repo card demo.
+    // This could be made dynamic with another input field if desired.
+    const initialRepoName = (initialUsername === "webcomponents") ? "gold-standard" : "Spoon-Knife";
+
+
+    function displayMockData() {
+      cardsHost.innerHTML = `
+        <div class="card-container">
+          <h2>Profile Summary (Mock)</h2>
+          <p>User: mockuser<br>Bio: Mock bio here.<br>Followers: 123</p>
+        </div>
+        <div class="card-container">
+          <h2>Profile Metrics (Mock)</h2>
+          <p>Public Repos: 5<br>Total Stars: 345</p>
+        </div>
+        <div class="card-container">
+          <h2>Top Repos (Mock)</h2>
+          <ul><li>mock-repo-wc (Stars: 50)</li><li>another-mock (Stars: 30)</li></ul>
+        </div>
+        <div class="card-container">
+          <h2>Contributions (Mock)</h2>
+          <p>Contribution data coming soon (mock).</p>
+        </div>
+        <div class="card-container">
+          <h2>Language Usage (Mock)</h2>
+          <p>JavaScript: 60%<br>HTML: 30%<br>CSS: 10%</p>
+        </div>
+         <div class="card-container">
+          <h2>Single Repo (Mock)</h2>
+          <p>mock-repo-name (mock details)</p>
+        </div>
+        <button id="backToLiveButton">Back to Live Data (webcomponents)</button>
+      `;
+      document.getElementById('backToLiveButton').addEventListener('click', () => {
+        usernameInput.value = initialUsername; // Default live user
+        displayLiveComponentsAndSetAttributes(initialUsername, initialRepoName);
+      });
+    }
+
+    function displayLiveComponentsAndSetAttributes(username, repoName) {
+      cardsHost.innerHTML = getLiveComponentsHTML(username, repoName);
+      updateLiveCardsAttributes(username, repoName); // Pass repoName here
+    }
+
+    function updateLiveCardsAttributes(username, repoName) { // Added repoName parameter
+      const token = tokenInput.value || undefined;
+
+      document.querySelectorAll('profile-card-wc').forEach(card => {
+        card.setAttribute('username', username);
+        if (token) card.setAttribute('token', token); else card.removeAttribute('token');
+      });
+      const languageCard = document.querySelector('language-usage-card-wc');
+      if (languageCard) {
+        languageCard.setAttribute('username', username);
+        if (token) languageCard.setAttribute('token', token); else languageCard.removeAttribute('token');
+      }
+      const singleRepoCard = document.querySelector('single-repo-card-wc');
+      if (singleRepoCard) {
+        singleRepoCard.setAttribute('username', username);
+        // Use the passed repoName or a default/input for repo-name
+        singleRepoCard.setAttribute('repo-name', repoName || defaultRepoNameForDemo);
+        if (token) singleRepoCard.setAttribute('token', token); else singleRepoCard.removeAttribute('token');
+      }
+    }
+
+    loadButton.addEventListener('click', () => {
+      const currentUsername = usernameInput.value;
+      // For simplicity, using a fixed repo name for live data or derive it.
+      // Could add another input field for repoName if dynamic changes are needed for single repo card.
+      const currentRepoName = (currentUsername === "webcomponents") ? "gold-standard" : "Spoon-Knife";
+      if (currentUsername === 'mockuser') {
+        displayMockData();
+      } else {
+        displayLiveComponentsAndSetAttributes(currentUsername, currentRepoName);
+      }
+    });
+
+    mockUserButton.addEventListener('click', () => {
+      usernameInput.value = 'mockuser';
+      displayMockData();
+    });
+
+    // Initial setup
+    displayLiveComponentsAndSetAttributes(initialUsername, initialRepoName);
+  </script>
+</body>
+</html>

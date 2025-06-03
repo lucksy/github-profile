@@ -1,12 +1,33 @@
 {
   "name": "@github-profile-cards/core",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "license": "MIT",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "PATH=$PATH:../../node_modules/.bin tsup src/index.ts --format esm,cjs --dts --clean"
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap"
+  },
+  "keywords": [
+    "github",
+    "profile",
+    "cards",
+    "api",
+    "core"
+  ],
+  "devDependencies": {
+    "tsup": "^8.0.0"
   }
 }

@@ -1,4 +1,29 @@
-import type { GitHubUser, GitHubRepo, GitHubData } from './github-api';
+// Define core GitHub data structures
+
+export interface GitHubUser {
+  avatar_url: string;
+  bio: string | null;
+  followers: number;
+  following: number;
+  html_url: string;
+  location: string | null;
+  login: string;
+  name: string | null;
+  public_repos: number;
+}
+
+export interface GitHubRepo {
+  id: number;
+  name: string;
+  description: string | null;
+  html_url: string;
+  stargazers_count: number;
+  language: string | null; // Primary language
+  languages_url: string; // URL to fetch language breakdown
+  forks_count: number; // Added this as it's often useful for repo cards
+}
+
+// Removed GitHubData import for now, will see if it's needed.
 
 /**
  * Props for a card displaying a summary of a GitHub user's profile.
@@ -9,26 +34,40 @@ export interface ProfileCardProps {
   /**
    * Determines the specific type of profile information to display.
    * - `summary`: Basic info like avatar, name, bio, location, followers.
-   * - `metrics`: Key statistics like public repos, followers, total stars on top repos, following.
-   * - `top-repos`: A list or grid of the user's most popular repositories.
+ * - `repos`: A list or grid of the user's most popular repositories.
+ * - `contributions`: Data related to user's contribution activity (placeholder for now).
    */
-  variant?: 'summary' | 'metrics' | 'top-repos'; // Removed 'contributions' for now as it requires more complex data
+  variant?: 'summary' | 'repos' | 'contributions';
 }
 
 /**
- * Props for a card displaying information about a single GitHub repository.
+ * Input props for fetching data for a single repository.
  */
 export interface RepoCardProps {
-  /** The full GitHubRepo object or a relevant subset. */
-  repo: Pick<GitHubRepo, 'name' | 'description' | 'stargazers_count' | 'forks_count' | 'language' | 'html_url'>;
+  username: string;
+  repoName: string;
+  token?: string;
 }
 
 /**
- * Props for a card displaying a grid of multiple GitHub repositories.
+ * Props for displaying a single repository's details.
  */
-export interface RepoGridCardProps {
-  /** An array of GitHubRepo objects or relevant subsets. */
-  repos: Array<Pick<GitHubRepo, 'id' | 'name' | 'description' | 'stargazers_count' | 'forks_count' | 'language' | 'html_url'>>;
+export interface RepoDisplayData {
+  id: number; // Added for React keys and general identification
+  name: string;
+  description: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  language: string | null;
+  html_url: string;
+}
+
+/**
+ * Props for displaying a grid of multiple GitHub repositories.
+ */
+export interface RepoGridDisplayData {
+  /** An array of GitHubRepo objects or relevant subsets for display. */
+  repos: Array<RepoDisplayData>; // Use RepoDisplayData for consistency
 }
 
 /**
@@ -44,13 +83,30 @@ export interface LanguageUsageStat {
 /**
  * Props for a card displaying language usage statistics derived from a user's repositories.
  */
-export interface LanguageUsageCardProps {
-  /** An array of GitHubRepo objects from which to derive language statistics. */
-  repos: GitHubRepo[]; // Needs full repo objects if we are to rely on `language` field.
+export interface LanguageUsageProps {
+  username: string;
+  token?: string;
+}
+
+/**
+ * Represents aggregated language statistics for a user.
+ * Keys are language names, values are the number of bytes or projects.
+ */
+export interface LanguageStats {
+  [language: string]: number;
+}
+
+/**
+ * Represents contribution statistics for a user.
+ * This is a placeholder and would need further definition based on available GitHub data.
+ */
+export interface ContributionStats {
+  total_contributions_last_year?: number;
+  // Potentially detailed breakdown by date or repository.
 }
 
 
-// --- Data types for processed card data ---
+// --- Data types for processed card data (some were already here) ---
 
 export interface ProfileSummaryData {
   avatar_url: string;
@@ -74,5 +130,5 @@ export interface GitHubMetricsData {
 
 // TopReposData would likely be GitHubRepo[] or a Pick<...> version of it.
 // For now, we assume the raw `data.repos` from `fetchGitHubData` is used directly,
-// or a simple Pick like in RepoGridCardProps.
-export type TopReposData = Array<Pick<GitHubRepo, 'name' | 'description' | 'stargazers_count' | 'language' | 'html_url' | 'id'>>;
+// or a simple Pick like in RepoGridDisplayData.
+export type TopReposData = RepoGridDisplayData; // TopReposData can alias RepoGridDisplayData

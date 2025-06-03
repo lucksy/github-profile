@@ -1,18 +1,46 @@
 {
   "name": "@github-profile-cards/react-material",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "license": "MIT",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "scripts": {
-    "build": "tsup"
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
-  "devDependencies": {
-    "tsup": "^8.0.0"
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --sourcemap --external react,react-dom,@mui/material,@emotion/react,@emotion/styled,@github-profile-cards/core --out-dir ./dist --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@github-profile-cards/core": "workspace:*"
   },
   "peerDependencies": {
-    "react": "^18.0.0"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@mui/material": "^5.15.0",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0"
+  },
+  "keywords": [
+    "github",
+    "profile",
+    "cards",
+    "react",
+    "material ui",
+    "mui"
+  ],
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0"
   }
 }
