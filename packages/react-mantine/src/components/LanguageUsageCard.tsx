@@ -1,13 +1,50 @@
-import React from 'react';
-import { getLanguageUsage, type LanguageUsageCardProps as CoreLanguageUsageCardProps, type LanguageUsageStat } from '@github-profile-cards/core';
-import { Card, Text, Progress, Group, Title, Stack } from '@mantine/core';
+import React, { useState, useEffect } from 'react';
+import {
+  LanguageUsageProps,
+  LanguageStats,
+  fetchGitHubData,
+  getLanguageUsageStats,
+  fetchGenericGitHubAPI,
+  getLanguageColor, // Import from core
+} from '@github-profile-cards/core';
+import { Card, Text, Progress, Group, Title, Stack, Loader, Alert } from '@mantine/core';
 
-export type LanguageUsageCardProps = CoreLanguageUsageCardProps;
+export const LanguageUsageCard: React.FC<LanguageUsageProps> = ({ username, token }) => {
+  const [languageStats, setLanguageStats] = useState<LanguageStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-export const LanguageUsageCard: React.FC<LanguageUsageCardProps> = ({ repos }) => {
-  const langUsage = getLanguageUsage(repos);
+  useEffect(() => {
+    const loadData = async () => {
+      if (!username) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const githubData = await fetchGitHubData(username, token);
+        if (githubData && githubData.repos) {
+          const stats = await getLanguageUsageStats(githubData.repos, fetchGenericGitHubAPI, token);
+          setLanguageStats(stats);
+        } else {
+          setError('User or repository data not found.');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load language usage data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [username, token]);
 
-  if (langUsage.length === 0) {
+  if (loading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return <Alert color="red" title="Error">{error}</Alert>;
+  }
+
+  if (!languageStats || Object.keys(languageStats).length === 0) {
     return (
       <Card shadow="sm" padding="lg" radius="md" withBorder>
         <Title order={4} mb="md">Language Usage</Title>
@@ -16,13 +53,26 @@ export const LanguageUsageCard: React.FC<LanguageUsageCardProps> = ({ repos }) =
     );
   }
 
-  const totalCount = langUsage.reduce((acc, stat) => acc + stat.count, 0);
+  const totalBytes = Object.values(languageStats).reduce((acc, bytes) => acc + bytes, 0);
+  if (totalBytes === 0) {
+    return (
+      <Card shadow="sm" padding="lg" radius="md" withBorder>
+        <Title order={4} mb="md">Language Usage</Title>
+        <Text>No language byte data to display (total is zero).</Text>
+      </Card>
+    );
+  }
 
-  const progressSections = langUsage.map(stat => ({
-    value: (stat.count / totalCount) * 100,
-    color: stat.color || getRandomColor(stat.language), // Use provided color or generate one
-    label: stat.language,
-    tooltip: `${stat.language}: ${stat.count} repo(s) (${((stat.count / totalCount) * 100).toFixed(1)}%)`,
+  // Sort languages by usage and take top N or filter by percentage
+  const sortedLanguages = Object.entries(languageStats)
+    .sort(([, aBytes], [, bBytes]) => bBytes - aBytes)
+    .slice(0, 10); // Display top 10 languages, for example
+
+  const progressSections = sortedLanguages.map(([lang, bytes]) => ({
+    value: (bytes / totalBytes) * 100,
+    color: getLanguageColor(lang) || '#CCCCCC', // Use core's color mapping
+    label: lang,
+    tooltip: `${lang}: ${((bytes / totalBytes) * 100).toFixed(1)}% (${bytes.toLocaleString()} bytes)`,
   }));
 
   return (
@@ -42,28 +92,10 @@ export const LanguageUsageCard: React.FC<LanguageUsageCardProps> = ({ repos }) =
         {progressSections.map(section => (
           <Group key={section.label} gap="xs">
             <div style={{ width: 10, height: 10, backgroundColor: section.color, borderRadius: '50%' }} />
-            <Text size="sm">{section.label} ({((section.value)).toFixed(1)}%)</Text>
+            <Text size="sm">{section.label} ({section.value.toFixed(1)}%)</Text>
           </Group>
         ))}
       </Stack>
     </Card>
   );
 };
-
-// Helper function for random colors if not provided - for visual distinction
-// In a real app, consistent color mapping based on language name is better.
-// The core package's getLanguageColor is one such example.
-const colorCache: Record<string, string> = {};
-function getRandomColor(languageName: string): string {
-  if (colorCache[languageName]) {
-    return colorCache[languageName];
-  }
-  // Simple hash function to get a somewhat consistent color
-  let hash = 0;
-  for (let i = 0; i < languageName.length; i++) {
-    hash = languageName.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const color = `hsl(${hash % 360}, 70%, 50%)`;
-  colorCache[languageName] = color;
-  return color;
-}

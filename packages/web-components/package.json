@@ -1,14 +1,38 @@
 {
   "name": "@github-profile-cards/web-components",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "license": "MIT",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "scripts": {
-    "build": "tsup"
+  "sideEffects": [
+    "./dist/index.js",
+    "./dist/index.mjs"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap --out-dir ./dist --tsconfig ./tsconfig.json"
+  },
+  "dependencies": {
+    "@github-profile-cards/core": "workspace:*"
+  },
+  "keywords": [
+    "github",
+    "profile",
+    "cards",
+    "web components",
+    "custom elements"
+  ],
   "devDependencies": {
     "tsup": "^8.0.0"
   }

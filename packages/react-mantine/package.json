@@ -1,26 +1,45 @@
 {
   "name": "@github-profile-cards/react-mantine",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "license": "MIT",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --external react,react-dom,@mantine/core,@mantine/hooks,@tabler/icons-react,@github-profile-cards/core --out-dir ./dist --tsconfig ./tsconfig.json"
+    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --sourcemap --external react,react-dom,@mantine/core,@mantine/hooks,@tabler/icons-react,@github-profile-cards/core --out-dir ./dist --tsconfig ./tsconfig.json"
   },
   "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
     "@mantine/core": "^7.0.0",
     "@mantine/hooks": "^7.0.0",
-    "@tabler/icons-react": "^3.0.0",
-    "react": "^18.0.0"
+    "@tabler/icons-react": "^3.0.0"
   },
   "dependencies": {
     "@github-profile-cards/core": "workspace:*"
   },
+  "keywords": [
+    "github",
+    "profile",
+    "cards",
+    "react",
+    "mantine"
+  ],
   "devDependencies": {
     "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0"
+    "@types/react-dom": "^18.0.0",
+    "tsup": "^8.0.0"
   }
 }

@@ -1,150 +1,10 @@
-// Interfaces for GitHub API data
-export interface GitHubUser {
-  login: string;
-  id: number;
-  node_id: string;
-  avatar_url: string;
-  gravatar_id: string;
-  url: string;
-  html_url: string;
-  followers_url: string;
-  following_url: string;
-  gists_url: string;
-  starred_url: string;
-  subscriptions_url: string;
-  organizations_url: string;
-  repos_url: string;
-  events_url: string;
-  received_events_url: string;
-  type: string;
-  site_admin: boolean;
-  name: string | null;
-  company: string | null;
-  blog: string | null;
-  location: string | null;
-  email: string | null;
-  hireable: boolean | null;
-  bio: string | null;
-  twitter_username: string | null;
-  public_repos: number;
-  public_gists: number;
-  followers: number;
-  following: number;
-  created_at: string;
-  updated_at: string;
-}
+import type { GitHubUser, GitHubRepo } from '../src/card-types';
 
-export interface GitHubRepoOwner {
-  login: string;
-  id: number;
-  node_id: string;
-  avatar_url: string;
-  gravatar_id: string;
-  url: string;
-  html_url: string;
-  followers_url: string;
-  following_url: string;
-  gists_url: string;
-  starred_url: string;
-  subscriptions_url: string;
-  organizations_url: string;
-  repos_url: string;
-  events_url: string;
-  received_events_url: string;
-  type: string;
-  site_admin: boolean;
-}
-
-export interface GitHubRepo {
-  id: number;
-  node_id: string;
-  name: string;
-  full_name: string;
-  private: boolean;
-  owner: GitHubRepoOwner;
-  html_url: string;
-  description: string | null;
-  fork: boolean;
-  url: string;
-  forks_url: string;
-  keys_url: string;
-  collaborators_url: string;
-  teams_url: string;
-  hooks_url: string;
-  issue_events_url: string;
-  events_url: string;
-  assignees_url: string;
-  branches_url: string;
-  tags_url: string;
-  blobs_url: string;
-  git_tags_url: string;
-  git_refs_url: string;
-  trees_url: string;
-  statuses_url: string;
-  languages_url: string;
-  stargazers_url: string;
-  contributors_url: string;
-  subscribers_url: string;
-  subscription_url: string;
-  commits_url: string;
-  git_commits_url: string;
-  comments_url: string;
-  issue_comment_url: string;
-  contents_url: string;
-  compare_url: string;
-  merges_url: string;
-  archive_url: string;
-  downloads_url: string;
-  issues_url: string;
-  pulls_url: string;
-  milestones_url: string;
-  notifications_url: string;
-  labels_url: string;
-  releases_url: string;
-  deployments_url: string;
-  created_at: string;
-  updated_at: string;
-  pushed_at: string;
-  git_url: string;
-  ssh_url: string;
-  clone_url: string;
-  svn_url: string;
-  homepage: string | null;
-  size: number;
-  stargazers_count: number;
-  watchers_count: number;
-  language: string | null;
-  has_issues: boolean;
-  has_projects: boolean;
-  has_downloads: boolean;
-  has_wiki: boolean;
-  has_pages: boolean;
-  forks_count: number;
-  mirror_url: string | null;
-  archived: boolean;
-  disabled: boolean;
-  open_issues_count: number;
-  license: {
-    key: string;
-    name: string;
-    spdx_id: string;
-    url: string | null;
-    node_id: string;
-  } | null;
-  allow_forking: boolean;
-  is_template: boolean;
-  web_commit_signoff_required: boolean;
-  topics: string[];
-  visibility: string;
-  forks: number;
-  open_issues: number;
-  watchers: number;
-  default_branch: string;
-}
-
+// Define the structure of the data returned by fetchGitHubData
 export interface GitHubData {
   user: GitHubUser;
   repos: GitHubRepo[];
+  // We can add more fields here later, like language details per repo if fetched.
 }
 
 // Basic In-Memory Cache
@@ -212,7 +72,7 @@ export async function fetchGitHubData(
 
   if (!user) return null; // Should not happen if logic is correct, but as a safeguard.
 
-  // --- Fetch User Repositories (Top 5 by stars) ---
+  // --- Fetch User Repositories (Top 10 by stars) ---
   const reposCacheKey = `repos_${username}`;
   const cachedRepos = cache.get(reposCacheKey);
   let repos: GitHubRepo[] = [];
@@ -222,21 +82,24 @@ export async function fetchGitHubData(
     console.log(`Cache hit for repos: ${username}`);
   } else {
     try {
-      // Fetching top 5 repositories sorted by stars
-      const reposResponse = await fetch(`${GITHUB_API_BASE_URL}/users/${username}/repos?type=owner&sort=stargazers&per_page=5&direction=desc`, { headers });
+      // Fetching top 10 repositories sorted by stars (stargazers is an alias for stars)
+      // Using `sort=stars` and `direction=desc` for clarity, though stargazers is often used.
+      const reposUrl = `${GITHUB_API_BASE_URL}/users/${username}/repos?type=owner&sort=stars&direction=desc&per_page=10`;
+      const reposResponse = await fetch(reposUrl, { headers });
+
       if (!reposResponse.ok) {
         console.error(`Error fetching repos for ${username}: ${reposResponse.status} ${await reposResponse.text()}`);
-        // Don't return null for the whole thing if repos fail, maybe return partial data?
-        // For now, we'll return what we have (user data) and empty repos or handle as error.
-        // To keep it simple, if repos fail, we'll consider it a partial failure for now.
+        // For now, return user data with empty repos array if repos fetch fails
       } else {
+        // The fetched repo data will have more fields than our GitHubRepo type.
+        // TypeScript will allow this assignment as long as GitHubRepo's fields are present.
         repos = await reposResponse.json() as GitHubRepo[];
         cache.set(reposCacheKey, { data: repos, timestamp: Date.now() });
         console.log(`Fetched repos for: ${username} from API`);
       }
     } catch (error) {
       console.error(`Network or other error fetching repos for ${username}:`, error);
-      // As above, decide on error handling strategy.
+      // Return user data with empty repos array in case of network error
     }
   }
 
@@ -244,4 +107,71 @@ export async function fetchGitHubData(
     user,
     repos,
   };
+}
+
+/**
+ * A generic fetch utility for making authenticated GitHub API requests.
+ * @param url The full URL to fetch.
+ * @param token Optional GitHub personal access token.
+ * @returns Promise<T> The JSON response body.
+ * @throws Will throw an error if the network response is not ok.
+ */
+export async function fetchGenericGitHubAPI<T>(
+  url: string,
+  token?: string
+): Promise<T> {
+  const apiToken = token || process.env.GITHUB_TOKEN;
+  const headers: HeadersInit = {
+    Accept: 'application/vnd.github.v3+json',
+  };
+  if (apiToken) {
+    headers['Authorization'] = `Bearer ${apiToken}`;
+  }
+
+  const response = await fetch(url, { headers });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error(`Error fetching ${url}: ${response.status} ${errorBody}`);
+    throw new Error(`GitHub API request failed: ${response.status} - ${url}`);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+/**
+ * Fetches data for a single repository.
+ * @param owner The owner of the repository.
+ * @param repoName The name of the repository.
+ * @param token Optional GitHub personal access token.
+ * @returns Promise<GitHubRepo> The repository data.
+ */
+export async function fetchSingleRepo(
+  owner: string,
+  repoName: string,
+  token?: string
+): Promise<GitHubRepo | null> {
+  if (!owner || !repoName) {
+    console.error('Repository owner and name are required.');
+    return null;
+  }
+
+  const repoUrl = `${GITHUB_API_BASE_URL}/repos/${owner}/${repoName}`;
+  const cacheKey = `repo_${owner}_${repoName}`;
+
+  const cachedRepo = cache.get(cacheKey);
+  if (cachedRepo && Date.now() - cachedRepo.timestamp < CACHE_DURATION_MS) {
+    console.log(`Cache hit for repo: ${owner}/${repoName}`);
+    return cachedRepo.data as GitHubRepo;
+  }
+
+  try {
+    const repoData = await fetchGenericGitHubAPI<GitHubRepo>(repoUrl, token);
+    cache.set(cacheKey, { data: repoData, timestamp: Date.now() });
+    console.log(`Fetched repo: ${owner}/${repoName} from API`);
+    return repoData;
+  } catch (error) {
+    console.error(`Error fetching single repo ${owner}/${repoName}:`, error);
+    return null;
+  }
 }

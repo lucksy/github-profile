@@ -1,11 +1,14 @@
 import React from 'react';
-import type { RepoCardProps as CoreRepoCardProps } from '@github-profile-cards/core';
+import type { RepoDisplayData } from '@github-profile-cards/core'; // Updated import
 import { Card, Text, Group, Anchor, Badge } from '@mantine/core';
 import { IconStar, IconGitFork } from '@tabler/icons-react';
 
-export type RepoCardProps = CoreRepoCardProps;
+// Props type now directly uses RepoDisplayData
+export interface RepoItemCardProps {
+  repo: RepoDisplayData;
+}
 
-export const RepoCard: React.FC<RepoCardProps> = ({ repo }) => {
+export const RepoItemCard: React.FC<RepoItemCardProps> = ({ repo }) => { // Renamed component and props
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder h="100%">
       <Group justify="space-between" mt="md" mb="xs">
@@ -29,7 +32,7 @@ export const RepoCard: React.FC<RepoCardProps> = ({ repo }) => {
         <Group gap={4}>
           <IconGitFork size={16} />
           <Text size="sm" c="dimmed">
-            {repo.forks_count}
+            {repo.forks_count} {/* forks_count is available in RepoDisplayData now */}
           </Text>
         </Group>
       </Group>
