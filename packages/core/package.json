@@ -1,0 +1,12 @@
+{
+  "name": "@github-profile-cards/core",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "PATH=$PATH:../../node_modules/.bin tsup src/index.ts --format esm,cjs --dts --clean"
+  }
+}
