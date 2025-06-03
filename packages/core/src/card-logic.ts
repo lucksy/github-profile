@@ -34,22 +34,16 @@ export function getGitHubMetrics(user: GitHubUser, repos: GitHubRepo[]): GitHubM
  * This function maps the raw repo data to the fields defined in TopReposData (via RepoDisplayData).
  */
 export function getTopRepos(repos: GitHubRepo[]): TopReposData {
-  return repos.map(repo => ({
-    // Map to the fields expected by RepoDisplayData, which TopReposData uses.
-    // id is not in RepoDisplayData, so it's removed if TopReposData strictly follows RepoGridDisplayData -> RepoDisplayData.
-    // However, TopReposData was originally defined as Array<Pick<GitHubRepo, 'name' | 'description' | 'stargazers_count' | 'language' | 'html_url' | 'id'>>;
-    // The current card-types.ts has TopReposData = RepoGridDisplayData, and RepoGridDisplayData.repos is Array<RepoDisplayData>.
-    // RepoDisplayData now includes id.
+  const mappedReposArray: RepoDisplayData[] = repos.map(repo => ({
     id: repo.id,
     name: repo.name,
     description: repo.description,
     stargazers_count: repo.stargazers_count,
-    forks_count: repo.forks_count, // forks_count is in GitHubRepo and RepoDisplayData
+    forks_count: repo.forks_count,
     language: repo.language,
     html_url: repo.html_url,
   }));
-  // Since TopReposData is an alias for RepoGridDisplayData, the return type should be { repos: Array<RepoDisplayData> }
-  return { repos: mappedRepos };
+  return { repos: mappedReposArray };
 }
 
 
