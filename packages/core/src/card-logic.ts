@@ -1,4 +1,4 @@
-import type { GitHubUser, GitHubRepo, LanguageStats, ProfileSummaryData, GitHubMetricsData, TopReposData } from './card-types';
+import type { GitHubUser, GitHubRepo, LanguageStats, ProfileSummaryData, GitHubMetricsData, TopReposData, RepoDisplayData } from './card-types';
 // LanguageUsageStat might be replaced by LanguageStats depending on the outcome of getLanguageUsageStats
 
 /**
@@ -61,14 +61,10 @@ export async function getLanguageUsageStats(
 
   for (const repo of repos) {
     if (repo.languages_url) {
-      try {
-        const repoLanguages = await fetchFn(repo.languages_url, token);
-        for (const [lang, bytes] of Object.entries(repoLanguages)) {
-          aggregatedLanguageStats[lang] = (aggregatedLanguageStats[lang] || 0) + bytes;
-        }
-      } catch (error) {
-        console.error(`Error fetching languages for repo ${repo.name}:`, error);
-        // Optionally, continue to next repo or handle error differently
+      // Removed try-catch as per no-useless-catch. Errors from fetchFn will propagate.
+      const repoLanguages = await fetchFn(repo.languages_url, token);
+      for (const [lang, bytes] of Object.entries(repoLanguages)) {
+        aggregatedLanguageStats[lang] = (aggregatedLanguageStats[lang] || 0) + bytes;
       }
     }
   }
@@ -79,6 +75,7 @@ export async function getLanguageUsageStats(
  * Provides a basic color for known languages.
  * This is a simplified version; a more comprehensive mapping might be needed.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getLanguageColor(language: string): string | undefined {
   const colors: Record<string, string> = {
     'JavaScript': '#f1e05a',
