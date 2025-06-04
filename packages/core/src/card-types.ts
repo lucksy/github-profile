@@ -36,8 +36,9 @@ export interface ProfileCardProps {
    * - `summary`: Basic info like avatar, name, bio, location, followers.
  * - `repos`: A list or grid of the user's most popular repositories.
  * - `contributions`: Data related to user's contribution activity (placeholder for now).
+ * - `metrics`: Key statistics about the user's GitHub activity.
    */
-  variant?: 'summary' | 'repos' | 'contributions';
+  variant?: 'summary' | 'repos' | 'contributions' | 'metrics';
 }
 
 /**
