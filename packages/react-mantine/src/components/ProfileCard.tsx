@@ -6,10 +6,7 @@ import {
   getTopRepos, // Updated import
   type GitHubData,
   type ProfileCardProps, // Use directly from core
-  // Import specific data types if needed for casting or intermediate variables
-  type ProfileSummaryData,
-  type GitHubMetricsData,
-  type TopReposData,
+  // Unused type imports ProfileSummaryData, GitHubMetricsData, TopReposData removed
   // Import error types
   NotFoundError,
   AuthenticationError,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Text, Title, Alert } from '@mantine/core'; // Removed SimpleGrid, Anchor from here, will use RepoGridCard
+import { Card, Text, Title } from '@mantine/core'; // Removed SimpleGrid, Anchor, and unused Alert
 import type { ProfileCardProps, TopReposData } from '@github-profile-cards/core';
 import { RepoGridCard } from './RepoGridCard'; // Use the dedicated grid display component
 
