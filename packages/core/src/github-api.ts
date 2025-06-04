@@ -1,5 +1,49 @@
 import type { GitHubUser, GitHubRepo } from '../src/card-types';
 
+// Custom Error Classes
+export class GitHubAPIError extends Error {
+  constructor(message: string, public status?: number, public url?: string) {
+    super(message);
+    this.name = 'GitHubAPIError';
+  }
+}
+
+export class NetworkError extends GitHubAPIError {
+  constructor(message: string, url?: string) {
+    super(message, undefined, url);
+    this.name = 'NetworkError';
+  }
+}
+
+export class AuthenticationError extends GitHubAPIError {
+  constructor(message: string, status: number, url?: string) {
+    super(message, status, url);
+    this.name = 'AuthenticationError';
+  }
+}
+
+export class NotFoundError extends GitHubAPIError {
+  constructor(message: string, status: number, url?: string) {
+    super(message, status, url);
+    this.name = 'NotFoundError';
+  }
+}
+
+export class RateLimitError extends GitHubAPIError {
+  constructor(message: string, status: number, url?: string, public resetTime?: Date) {
+    super(message, status, url);
+    this.name = 'RateLimitError';
+  }
+}
+
+export class InvalidRequestError extends GitHubAPIError {
+  constructor(message: string, status?: number, url?: string) {
+    super(message, status, url);
+    this.name = 'InvalidRequestError';
+  }
+}
+
+
 // Define the structure of the data returned by fetchGitHubData
 export interface GitHubData {
   user: GitHubUser;
@@ -8,11 +52,14 @@ export interface GitHubData {
 }
 
 // Basic In-Memory Cache
-interface CacheEntry {
-  data: any;
+// Define a union type for all possible data types stored in the cache
+type CachedData = GitHubUser | GitHubRepo | GitHubRepo[] | Record<string, number>;
+
+interface CacheEntry<T> {
+  data: T;
   timestamp: number;
 }
-const cache = new Map<string, CacheEntry>();
+const cache = new Map<string, CacheEntry<CachedData>>();
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
 
 const GITHUB_API_BASE_URL = 'https://api.github.com';
@@ -29,8 +76,7 @@ export async function fetchGitHubData(
   token?: string
 ): Promise<GitHubData | null> {
   if (!username) {
-    console.error('GitHub username is required.');
-    return null;
+    throw new InvalidRequestError('GitHub username is required.');
   }
 
   const apiToken = token || process.env.GITHUB_TOKEN;
@@ -43,63 +89,82 @@ export async function fetchGitHubData(
 
   // --- Fetch User Profile ---
   const userCacheKey = `user_${username}`;
-  const cachedUser = cache.get(userCacheKey);
+  const cachedUserEntry = cache.get(userCacheKey);
   let user: GitHubUser | null = null;
 
-  if (cachedUser && Date.now() - cachedUser.timestamp < CACHE_DURATION_MS) {
-    user = cachedUser.data as GitHubUser;
-    console.log(`Cache hit for user: ${username}`);
+  if (cachedUserEntry && Date.now() - cachedUserEntry.timestamp < CACHE_DURATION_MS) {
+    user = cachedUserEntry.data as GitHubUser;
+    // console.log(`Cache hit for user: ${username}`); // Optional: keep for debugging
   } else {
+    const userUrl = `${GITHUB_API_BASE_URL}/users/${username}`;
     try {
-      const userResponse = await fetch(`${GITHUB_API_BASE_URL}/users/${username}`, { headers });
-      if (userResponse.status === 404) {
-        console.error(`User ${username} not found.`);
-        return null;
-      }
+      const userResponse = await fetch(userUrl, { headers });
       if (!userResponse.ok) {
-        console.error(`Error fetching user ${username}: ${userResponse.status} ${await userResponse.text()}`);
-        // Potentially handle rate limits more specifically here
-        return null;
+        const status = userResponse.status;
+        const errorText = await userResponse.text();
+        if (status === 404) {
+          throw new NotFoundError(`User ${username} not found. ${errorText}`, status, userUrl);
+        } else if (status === 401 || status === 403) {
+          throw new AuthenticationError(`Authentication failed for user ${username}. ${errorText}`, status, userUrl);
+        } else if (status === 429) {
+          throw new RateLimitError(`Rate limit exceeded for user ${username}. ${errorText}`, status, userUrl);
+        } else if (status === 400) {
+          throw new InvalidRequestError(`Invalid request for user ${username}. ${errorText}`, status, userUrl);
+        } else {
+          throw new GitHubAPIError(`Error fetching user ${username}: ${status} ${errorText}`, status, userUrl);
+        }
       }
       user = await userResponse.json() as GitHubUser;
       cache.set(userCacheKey, { data: user, timestamp: Date.now() });
-      console.log(`Fetched user: ${username} from API`);
-    } catch (error) {
-      console.error(`Network or other error fetching user ${username}:`, error);
-      return null;
+      // console.log(`Fetched user: ${username} from API`); // Optional: keep for debugging
+    } catch (error: any) {
+      if (error instanceof GitHubAPIError) {
+        throw error; // Re-throw custom errors
+      }
+      // Assume other errors are network errors
+      throw new NetworkError(`Network error fetching user ${username}: ${error.message}`, userUrl);
     }
   }
 
-  if (!user) return null; // Should not happen if logic is correct, but as a safeguard.
+  // No need for `if (!user) return null;` as errors are now thrown.
 
   // --- Fetch User Repositories (Top 10 by stars) ---
   const reposCacheKey = `repos_${username}`;
-  const cachedRepos = cache.get(reposCacheKey);
+  const cachedReposEntry = cache.get(reposCacheKey);
   let repos: GitHubRepo[] = [];
 
-  if (cachedRepos && Date.now() - cachedRepos.timestamp < CACHE_DURATION_MS) {
-    repos = cachedRepos.data as GitHubRepo[];
-    console.log(`Cache hit for repos: ${username}`);
+  if (cachedReposEntry && Date.now() - cachedReposEntry.timestamp < CACHE_DURATION_MS) {
+    repos = cachedReposEntry.data as GitHubRepo[];
+    // console.log(`Cache hit for repos: ${username}`); // Optional: keep for debugging
   } else {
+    const reposUrl = `${GITHUB_API_BASE_URL}/users/${username}/repos?type=owner&sort=stars&direction=desc&per_page=10`;
     try {
-      // Fetching top 10 repositories sorted by stars (stargazers is an alias for stars)
-      // Using `sort=stars` and `direction=desc` for clarity, though stargazers is often used.
-      const reposUrl = `${GITHUB_API_BASE_URL}/users/${username}/repos?type=owner&sort=stars&direction=desc&per_page=10`;
       const reposResponse = await fetch(reposUrl, { headers });
 
       if (!reposResponse.ok) {
-        console.error(`Error fetching repos for ${username}: ${reposResponse.status} ${await reposResponse.text()}`);
-        // For now, return user data with empty repos array if repos fetch fails
-      } else {
-        // The fetched repo data will have more fields than our GitHubRepo type.
-        // TypeScript will allow this assignment as long as GitHubRepo's fields are present.
-        repos = await reposResponse.json() as GitHubRepo[];
-        cache.set(reposCacheKey, { data: repos, timestamp: Date.now() });
-        console.log(`Fetched repos for: ${username} from API`);
+        const status = reposResponse.status;
+        const errorText = await reposResponse.text();
+        if (status === 404) { // Less likely for repos if user exists, but possible
+          throw new NotFoundError(`Repos not found for user ${username}. ${errorText}`, status, reposUrl);
+        } else if (status === 401 || status === 403) {
+          throw new AuthenticationError(`Authentication failed fetching repos for ${username}. ${errorText}`, status, reposUrl);
+        } else if (status === 429) {
+          throw new RateLimitError(`Rate limit exceeded fetching repos for ${username}. ${errorText}`, status, reposUrl);
+        } else if (status === 400) {
+          throw new InvalidRequestError(`Invalid request for repos of user ${username}. ${errorText}`, status, reposUrl);
+        } else {
+          throw new GitHubAPIError(`Error fetching repos for ${username}: ${status} ${errorText}`, status, reposUrl);
+        }
       }
-    } catch (error) {
-      console.error(`Network or other error fetching repos for ${username}:`, error);
-      // Return user data with empty repos array in case of network error
+      repos = await reposResponse.json() as GitHubRepo[];
+      cache.set(reposCacheKey, { data: repos, timestamp: Date.now() });
+      // console.log(`Fetched repos for: ${username} from API`); // Optional: keep for debugging
+    } catch (error: any) {
+      if (error instanceof GitHubAPIError) {
+        throw error; // Re-throw custom errors
+      }
+      // Assume other errors are network errors
+      throw new NetworkError(`Network error fetching repos for ${username}: ${error.message}`, reposUrl);
     }
   }
 
@@ -128,15 +193,43 @@ export async function fetchGenericGitHubAPI<T>(
     headers['Authorization'] = `Bearer ${apiToken}`;
   }
 
-  const response = await fetch(url, { headers });
+  try {
+    const response = await fetch(url, { headers });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error(`Error fetching ${url}: ${response.status} ${errorBody}`);
-    throw new Error(`GitHub API request failed: ${response.status} - ${url}`);
+    if (!response.ok) {
+      const status = response.status;
+      const errorBody = await response.text(); // Read body once
+      // Determine reset time for RateLimitError if headers are available
+      let resetTime: Date | undefined;
+      if (status === 429) {
+        const rateLimitResetHeader = response.headers.get('X-RateLimit-Reset');
+        if (rateLimitResetHeader) {
+          resetTime = new Date(parseInt(rateLimitResetHeader, 10) * 1000);
+        }
+      }
+
+      switch (status) {
+        case 401:
+        case 403:
+          throw new AuthenticationError(`Authentication failed: ${errorBody}`, status, url);
+        case 404:
+          throw new NotFoundError(`Resource not found: ${errorBody}`, status, url);
+        case 429:
+          throw new RateLimitError(`Rate limit exceeded: ${errorBody}`, status, url, resetTime);
+        case 400:
+          throw new InvalidRequestError(`Invalid request: ${errorBody}`, status, url);
+        default:
+          throw new GitHubAPIError(`GitHub API request failed: ${status} ${errorBody}`, status, url);
+      }
+    }
+    return response.json() as Promise<T>;
+  } catch (error: any) {
+    if (error instanceof GitHubAPIError) {
+      throw error; // Re-throw known API errors
+    }
+    // Assume other errors (e.g.,TypeError from fetch itself for network issues) are NetworkErrors
+    throw new NetworkError(`Network error for ${url}: ${error.message}`, url);
   }
-
-  return response.json() as Promise<T>;
 }
 
 /**
@@ -152,26 +245,22 @@ export async function fetchSingleRepo(
   token?: string
 ): Promise<GitHubRepo | null> {
   if (!owner || !repoName) {
-    console.error('Repository owner and name are required.');
-    return null;
+    throw new InvalidRequestError('Repository owner and name are required.');
   }
 
   const repoUrl = `${GITHUB_API_BASE_URL}/repos/${owner}/${repoName}`;
   const cacheKey = `repo_${owner}_${repoName}`;
 
-  const cachedRepo = cache.get(cacheKey);
-  if (cachedRepo && Date.now() - cachedRepo.timestamp < CACHE_DURATION_MS) {
-    console.log(`Cache hit for repo: ${owner}/${repoName}`);
-    return cachedRepo.data as GitHubRepo;
+  const cachedRepoEntry = cache.get(cacheKey);
+  if (cachedRepoEntry && Date.now() - cachedRepoEntry.timestamp < CACHE_DURATION_MS) {
+    // console.log(`Cache hit for repo: ${owner}/${repoName}`); // Optional
+    return cachedRepoEntry.data as GitHubRepo;
   }
 
-  try {
-    const repoData = await fetchGenericGitHubAPI<GitHubRepo>(repoUrl, token);
-    cache.set(cacheKey, { data: repoData, timestamp: Date.now() });
-    console.log(`Fetched repo: ${owner}/${repoName} from API`);
-    return repoData;
-  } catch (error) {
-    console.error(`Error fetching single repo ${owner}/${repoName}:`, error);
-    return null;
-  }
+  // No specific try-catch here as fetchGenericGitHubAPI now throws structured errors
+  // Let them propagate up.
+  const repoData = await fetchGenericGitHubAPI<GitHubRepo>(repoUrl, token);
+  cache.set(cacheKey, { data: repoData, timestamp: Date.now() });
+  // console.log(`Fetched repo: ${owner}/${repoName} from API`); // Optional
+  return repoData;
 }
