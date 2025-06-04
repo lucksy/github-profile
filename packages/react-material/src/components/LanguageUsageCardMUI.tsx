@@ -6,6 +6,11 @@ import {
   getLanguageUsageStats,
   fetchGenericGitHubAPI,
   getLanguageColor, // Using the core one, will need to map its output to MUI sx prop or use MUI specific colors
+  // Import error types
+  NotFoundError,
+  AuthenticationError,
+  RateLimitError,
+  GitHubAPIError,
 } from '@github-profile-cards/core';
 import { Card, CardContent, Typography, Box, LinearProgress, CircularProgress, Alert } from '@mui/material';
 import { ErrorOutline } from '@mui/icons-material';
@@ -40,11 +45,22 @@ export const LanguageUsageCardMUI: React.FC<LanguageUsageProps> = ({ username, t
         if (githubData && githubData.repos) {
           const stats = await getLanguageUsageStats(githubData.repos, fetchGenericGitHubAPI, token);
           setLanguageStats(stats);
-        } else {
-          setError('User or repository data not found.');
         }
+        // The `else` block that set a generic error is removed.
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load language usage data.');
+        let message = 'An unknown error occurred while fetching language data.';
+        if (err instanceof NotFoundError) {
+          message = `Could not find user '${username}' or required repository data for language stats.`;
+        } else if (err instanceof AuthenticationError) {
+          message = 'Authentication failed. Please check your GitHub token if provided.';
+        } else if (err instanceof RateLimitError) {
+          message = 'Rate limit exceeded. Please try again later.';
+        } else if (err instanceof GitHubAPIError) {
+          message = `API Error fetching language data: ${err.message}`;
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }
