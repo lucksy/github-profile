@@ -117,12 +117,14 @@ export async function fetchGitHubData(
       user = await userResponse.json() as GitHubUser;
       cache.set(userCacheKey, { data: user, timestamp: Date.now() });
       // console.log(`Fetched user: ${username} from API`); // Optional: keep for debugging
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof GitHubAPIError) {
         throw error; // Re-throw custom errors
       }
-      // Assume other errors are network errors
-      throw new NetworkError(`Network error fetching user ${username}: ${error.message}`, userUrl);
+      if (error instanceof Error) {
+        throw new NetworkError(`Network error fetching user ${username}: ${error.message}`, userUrl);
+      }
+      throw new NetworkError(`Network error fetching user ${username}: An unknown error occurred`, userUrl);
     }
   }
 
@@ -159,12 +161,14 @@ export async function fetchGitHubData(
       repos = await reposResponse.json() as GitHubRepo[];
       cache.set(reposCacheKey, { data: repos, timestamp: Date.now() });
       // console.log(`Fetched repos for: ${username} from API`); // Optional: keep for debugging
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof GitHubAPIError) {
         throw error; // Re-throw custom errors
       }
-      // Assume other errors are network errors
-      throw new NetworkError(`Network error fetching repos for ${username}: ${error.message}`, reposUrl);
+      if (error instanceof Error) {
+        throw new NetworkError(`Network error fetching repos for ${username}: ${error.message}`, reposUrl);
+      }
+      throw new NetworkError(`Network error fetching repos for ${username}: An unknown error occurred`, reposUrl);
     }
   }
 
@@ -223,12 +227,15 @@ export async function fetchGenericGitHubAPI<T>(
       }
     }
     return response.json() as Promise<T>;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error instanceof GitHubAPIError) {
       throw error; // Re-throw known API errors
     }
     // Assume other errors (e.g.,TypeError from fetch itself for network issues) are NetworkErrors
-    throw new NetworkError(`Network error for ${url}: ${error.message}`, url);
+    if (error instanceof Error) {
+      throw new NetworkError(`Network error for ${url}: ${error.message}`, url);
+    }
+    throw new NetworkError(`Network error for ${url}: An unknown error occurred`, url);
   }
 }
 
