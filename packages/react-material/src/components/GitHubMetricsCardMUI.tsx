@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Grid, Box } from '@mui/material';
+import { Card, CardContent, Typography, Grid } from '@mui/material';
 import type { ProfileCardProps, GitHubMetricsData } from '@github-profile-cards/core';
 
 export const GitHubMetricsCardMUI: React.FC<ProfileCardProps & { variantData?: GitHubMetricsData }> = ({ username, variantData }) => {

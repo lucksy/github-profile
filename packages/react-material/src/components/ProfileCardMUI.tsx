@@ -6,6 +6,11 @@ import {
   getTopRepos,
   type GitHubData,
   type ProfileCardProps,
+  // Import error types
+  NotFoundError,
+  AuthenticationError,
+  RateLimitError,
+  GitHubAPIError,
 } from '@github-profile-cards/core';
 import { Card, CircularProgress, Typography, Alert } from '@mui/material';
 import { ErrorOutline } from '@mui/icons-material';
@@ -34,11 +39,22 @@ export const ProfileCardMUI: React.FC<ProfileCardProps> = ({ username, token, va
         const fetchedData = await fetchGitHubData(username, token);
         if (fetchedData) {
           setGithubData(fetchedData);
-        } else {
-          setError('User not found or an error occurred while fetching data.');
         }
+        // The `else` block that set a generic error is removed.
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+        let message = 'An unknown error occurred while fetching profile data.';
+        if (err instanceof NotFoundError) {
+          message = `User '${username}' not found. Please check the username.`;
+        } else if (err instanceof AuthenticationError) {
+          message = 'Authentication failed. Please check your GitHub token if provided.';
+        } else if (err instanceof RateLimitError) {
+          message = 'Rate limit exceeded. Please try again later.';
+        } else if (err instanceof GitHubAPIError) {
+          message = `API Error: ${err.message}`;
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }

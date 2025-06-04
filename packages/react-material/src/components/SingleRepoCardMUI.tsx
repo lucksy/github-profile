@@ -2,7 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, Typography, CircularProgress, Alert, Box } from '@mui/material';
 import { ErrorOutline } from '@mui/icons-material';
 import type { RepoCardProps, GitHubRepo, RepoDisplayData } from '@github-profile-cards/core';
-import { fetchSingleRepo } from '@github-profile-cards/core';
+import {
+  fetchSingleRepo,
+  NotFoundError,
+  AuthenticationError,
+  RateLimitError,
+  GitHubAPIError,
+} from '@github-profile-cards/core';
 import { RepoItemCardMUI } from './RepoItemCardMUI';
 
 export const SingleRepoCardMUI: React.FC<RepoCardProps> = ({ username, repoName, token }) => {
@@ -23,11 +29,22 @@ export const SingleRepoCardMUI: React.FC<RepoCardProps> = ({ username, repoName,
         const fetchedRepo = await fetchSingleRepo(username, repoName, token);
         if (fetchedRepo) {
           setRepoData(fetchedRepo);
-        } else {
-          setError(`Repository ${username}/${repoName} not found or failed to load.`);
         }
+        // The `else` block that set a generic error is removed.
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load repository data.');
+        let message = 'An unknown error occurred while fetching repository data.';
+        if (err instanceof NotFoundError) {
+          message = `Repository '${username}/${repoName}' not found. Please check the names.`;
+        } else if (err instanceof AuthenticationError) {
+          message = 'Authentication failed. Please check your GitHub token if provided.';
+        } else if (err instanceof RateLimitError) {
+          message = 'Rate limit exceeded. Please try again later.';
+        } else if (err instanceof GitHubAPIError) {
+          message = `API Error: ${err.message}`;
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }

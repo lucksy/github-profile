@@ -18,7 +18,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --sourcemap --external react,react-dom,@mui/material,@emotion/react,@emotion/styled,@github-profile-cards/core --out-dir ./dist --tsconfig ./tsconfig.json"
+    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --sourcemap --external react,react-dom,@mui/material,@emotion/react,@emotion/styled,@github-profile-cards/core,@mui/icons-material --out-dir ./dist --tsconfig ./tsconfig.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
     "@github-profile-cards/core": "workspace:*"
@@ -28,7 +30,8 @@
     "react-dom": "^18.0.0",
     "@mui/material": "^5.15.0",
     "@emotion/react": "^11.11.0",
-    "@emotion/styled": "^11.11.0"
+    "@emotion/styled": "^11.11.0",
+    "@mui/icons-material": "^5.15.0"
   },
   "keywords": [
     "github",
@@ -41,6 +44,13 @@
   "devDependencies": {
     "tsup": "^8.0.0",
     "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0"
+    "@types/react-dom": "^18.0.0",
+    "@mui/icons-material": "^5.15.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "eslint-plugin-react": "^7.0.0",
+    "eslint-plugin-react-hooks": "^4.0.0",
+    "eslint-plugin-jsx-a11y": "^6.0.0"
   }
 }
