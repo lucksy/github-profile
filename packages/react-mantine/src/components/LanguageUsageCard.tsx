@@ -6,6 +6,11 @@ import {
   getLanguageUsageStats,
   fetchGenericGitHubAPI,
   getLanguageColor, // Import from core
+  // Import error types
+  NotFoundError,
+  AuthenticationError,
+  RateLimitError,
+  GitHubAPIError,
 } from '@github-profile-cards/core';
 import { Card, Text, Progress, Group, Title, Stack, Loader, Alert } from '@mantine/core';
 
@@ -24,11 +29,25 @@ export const LanguageUsageCard: React.FC<LanguageUsageProps> = ({ username, toke
         if (githubData && githubData.repos) {
           const stats = await getLanguageUsageStats(githubData.repos, fetchGenericGitHubAPI, token);
           setLanguageStats(stats);
-        } else {
-          setError('User or repository data not found.');
         }
+        // The `else` block that set a generic error is removed.
+        // If fetchGitHubData throws an error (e.g. NotFoundError for the user),
+        // it will be caught by the catch block below.
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load language usage data.');
+        let message = 'An unknown error occurred while fetching language data.';
+        if (err instanceof NotFoundError) {
+          // This could be from fetchGitHubData or getLanguageUsageStats if a repo's language URL 404s
+          message = `Could not find user '${username}' or required repository data.`;
+        } else if (err instanceof AuthenticationError) {
+          message = 'Authentication failed. Please check your GitHub token if provided.';
+        } else if (err instanceof RateLimitError) {
+          message = 'Rate limit exceeded. Please try again later.';
+        } else if (err instanceof GitHubAPIError) { // Covers errors from fetchGitHubData and getLanguageUsageStats
+          message = `API Error: ${err.message}`;
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -84,15 +103,16 @@ export const LanguageUsageCard: React.FC<LanguageUsageProps> = ({ username, toke
             key={section.label}
             value={section.value}
             color={section.color}
-            tooltip={section.tooltip}
+            // tooltip={section.tooltip} // Removed invalid prop
           />
         ))}
       </Progress.Root>
       <Stack gap="xs">
         {progressSections.map(section => (
+          // If tooltips are desired per section, they should wrap this Group or Text
           <Group key={section.label} gap="xs">
             <div style={{ width: 10, height: 10, backgroundColor: section.color, borderRadius: '50%' }} />
-            <Text size="sm">{section.label} ({section.value.toFixed(1)}%)</Text>
+            <Text size="sm">{section.label} ({section.value.toFixed(1)}%) {/* section.tooltip can be used here or in a Mantine Tooltip */}</Text>
           </Group>
         ))}
       </Stack>

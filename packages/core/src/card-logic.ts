@@ -75,8 +75,7 @@ export async function getLanguageUsageStats(
  * Provides a basic color for known languages.
  * This is a simplified version; a more comprehensive mapping might be needed.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getLanguageColor(language: string): string | undefined {
+export function getLanguageColor(language: string): string | undefined {
   const colors: Record<string, string> = {
     'JavaScript': '#f1e05a',
     'TypeScript': '#3178c6',

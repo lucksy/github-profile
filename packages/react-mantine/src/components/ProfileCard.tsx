@@ -10,6 +10,11 @@ import {
   type ProfileSummaryData,
   type GitHubMetricsData,
   type TopReposData,
+  // Import error types
+  NotFoundError,
+  AuthenticationError,
+  RateLimitError,
+  GitHubAPIError,
 } from '@github-profile-cards/core';
 import { Card, Loader, Alert, Text, Group } from '@mantine/core'; // Added Group
 import { IconAlertCircle } from '@tabler/icons-react';
@@ -36,13 +41,28 @@ export const ProfileCard: React.FC<ProfileCardProps> = ({ username, token, varia
       setError(null);
       try {
         const fetchedData = await fetchGitHubData(username, token);
-        if (fetchedData) {
+        // Since fetchGitHubData now throws errors or returns data,
+        // we only need to set data if the call succeeds.
+        // The null check for fetchedData before setting state is no longer strictly necessary
+        // if fetchGitHubData guarantees non-null on success, but it doesn't hurt.
+        if (fetchedData) { // This check can remain for safety or be removed if confident
           setGithubData(fetchedData);
-        } else {
-          setError('User not found or an error occurred while fetching data.');
         }
+        // The `else` block that set a generic error is removed because specific errors are now caught.
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+        let message = 'An unknown error occurred while fetching profile data.';
+        if (err instanceof NotFoundError) {
+          message = `User '${username}' not found. Please check the username.`;
+        } else if (err instanceof AuthenticationError) {
+          message = 'Authentication failed. Please check your GitHub token if provided.';
+        } else if (err instanceof RateLimitError) {
+          message = 'Rate limit exceeded. Please try again later.';
+        } else if (err instanceof GitHubAPIError) { // Catch other specific API errors
+          message = `API Error: ${err.message}`;
+        } else if (err instanceof Error) {
+          message = err.message; // Fallback for other JS errors
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }

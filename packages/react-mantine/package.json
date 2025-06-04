@@ -18,7 +18,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --sourcemap --external react,react-dom,@mantine/core,@mantine/hooks,@tabler/icons-react,@github-profile-cards/core --out-dir ./dist --tsconfig ./tsconfig.json"
+    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --sourcemap --external react,react-dom,@mantine/core,@mantine/hooks,@tabler/icons-react,@github-profile-cards/core --out-dir ./dist --tsconfig ./tsconfig.json",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "peerDependencies": {
     "react": "^18.0.0",
@@ -40,6 +42,12 @@
   "devDependencies": {
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "tsup": "^8.0.0"
+    "tsup": "^8.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "eslint-plugin-react": "^7.0.0",
+    "eslint-plugin-react-hooks": "^4.0.0",
+    "eslint-plugin-jsx-a11y": "^6.0.0"
   }
 }
