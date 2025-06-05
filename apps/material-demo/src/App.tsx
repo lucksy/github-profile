@@ -52,9 +52,10 @@ function App() {
 
   // If username is 'mockuser', render mock data directly
   if (username === 'mockuser') {
-    const summary = getProfileSummary(mockCoreData.user as any);
-    const metrics = getGitHubMetrics(mockCoreData.user as any, mockCoreData.repos as any[]);
-    const topRepos = getTopRepos(mockCoreData.repos as any[]);
+    // Removed 'as any' casts. If type errors occur, mockCoreData needs to align with core types.
+    const summary = getProfileSummary(mockCoreData.user);
+    const metrics = getGitHubMetrics(mockCoreData.user, mockCoreData.repos);
+    const topRepos = getTopRepos(mockCoreData.repos);
     const languageStats = mockCoreData.languageStats;
 
     return (
@@ -63,7 +64,7 @@ function App() {
           GitHub Profile Cards - Material UI Demo (Mock Data)
         </Typography>
         <Paper elevation={2} sx={{ p: 2, mb: 4 }}>
-          <Typography>Displaying hardcoded mock data for "mockuser".</Typography>
+          <Typography>Displaying hardcoded mock data for &quot;mockuser&quot;.</Typography>
           <Button onClick={() => { setInputValue('mui'); setUsername('mui'); }} sx={{mt: 1}}>Back to Live Data (mui)</Button>
         </Paper>
         <Stack spacing={3}>
@@ -100,14 +101,14 @@ function App() {
             label="GitHub Username"
             placeholder="Enter GitHub username"
             value={inputValue}
-            onChange={(event) => setInputValue(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setInputValue(event.target.value)}
             variant="outlined"
             fullWidth
           />
           <Button variant="contained" onClick={handleSubmit}>Load Cards</Button>
         </Box>
         <Box sx={{ mt: 1 }}>
-           <Button onClick={handleUseMockUser} variant="outlined">Use "mockuser"</Button>
+           <Button onClick={handleUseMockUser} variant="outlined">Use &quot;mockuser&quot;</Button>
         </Box>
          {MOCK_DEV_TOKEN === 'YOUR_GITHUB_TOKEN_HERE' &&
             <Typography variant="caption" color="text.secondary" display="block" sx={{mt:1}}>No development token provided. API rate limits may apply. {USE_MOCK_TOKEN_INFO}</Typography>
