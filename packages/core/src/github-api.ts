@@ -79,7 +79,7 @@ export async function fetchGitHubData(
     throw new InvalidRequestError('GitHub username is required.');
   }
 
-  const apiToken = token || process.env.GITHUB_TOKEN;
+  const apiToken = token;
   const headers: HeadersInit = {
     Accept: 'application/vnd.github.v3+json',
   };
@@ -189,7 +189,7 @@ export async function fetchGenericGitHubAPI<T>(
   url: string,
   token?: string
 ): Promise<T> {
-  const apiToken = token || process.env.GITHUB_TOKEN;
+  const apiToken = token;
   const headers: HeadersInit = {
     Accept: 'application/vnd.github.v3+json',
   };
