@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Container, TextField, Button, Stack, Title, Paper, Group, Text, Code } from '@mantine/core';
+import { Container, TextInput, Button, Stack, Title, Paper, Group, Text, Code } from '@mantine/core';
 import { ProfileCard, LanguageUsageCard, SingleRepoCard } from '@github-profile-cards/react-mantine';
 
 // A mock token for development - replace with a real one if needed for private repo testing
@@ -88,7 +88,7 @@ function App() {
 
       <Paper shadow="xs" p="md" mb="xl">
         <Group>
-          <TextField
+          <TextInput
             label="GitHub Username"
             placeholder="Enter GitHub username"
             value={inputValue}
