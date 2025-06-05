@@ -4,7 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "lib": ["ES2020", "DOM"],
-    // "composite": true, // Removed as per new strategy
+    "composite": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
