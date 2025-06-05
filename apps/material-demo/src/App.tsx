@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { Container, TextField, Button, Stack, Typography, Paper, Box, Code } from '@mui/material'; // Code is not MUI, use Typography or custom
+import { useState } from 'react';
+// Code component removed from @mui/material import
+// React default import removed as it's not needed with new JSX transform
+import { Container, TextField, Button, Stack, Typography, Paper, Box } from '@mui/material';
 import { ProfileCardMUI, LanguageUsageCardMUI, SingleRepoCardMUI } from '@github-profile-cards/react-material';
 
 // A mock token for development - replace with a real one if needed
@@ -36,7 +38,8 @@ const mockCoreData = { // Same mock data as in Mantine demo
 function App() {
   const [username, setUsername] = useState<string>('mui'); // Default to 'mui'
   const [inputValue, setInputValue] = useState<string>('mui');
-  const [token, setToken] = useState<string | undefined>(MOCK_DEV_TOKEN === 'YOUR_GITHUB_TOKEN_HERE' ? undefined : MOCK_DEV_TOKEN);
+  // token state and setToken removed. tokenValue will be derived directly.
+  const currentToken = MOCK_DEV_TOKEN === 'YOUR_GITHUB_TOKEN_HERE' ? undefined : MOCK_DEV_TOKEN;
 
   const handleSubmit = () => {
     setUsername(inputValue);
@@ -113,37 +116,38 @@ function App() {
 
       {username && ( // This will be true for non-mock user
         <Stack spacing={3}>
+          {/* Code component removed, username rendered directly in Typography */}
           <Typography variant="h4" component="h2">ProfileCard Variants for: <Typography component="span" fontFamily="monospace">{username}</Typography> (Live)</Typography>
 
           <Paper elevation={1} sx={{ p: 2 }}>
             <Typography variant="h5" component="h3" gutterBottom>Summary (Live)</Typography>
-            <ProfileCardMUI username={username} token={token} variant="summary" />
+            <ProfileCardMUI username={username} token={currentToken} variant="summary" />
           </Paper>
 
           <Paper elevation={1} sx={{ p: 2 }}>
             <Typography variant="h5" component="h3" gutterBottom>Metrics (Live)</Typography>
-            <ProfileCardMUI username={username} token={token} variant="metrics" />
+            <ProfileCardMUI username={username} token={currentToken} variant="metrics" />
           </Paper>
 
           <Paper elevation={1} sx={{ p: 2 }}>
             <Typography variant="h5" component="h3" gutterBottom>Top Repositories (Live)</Typography>
-            <ProfileCardMUI username={username} token={token} variant="repos" />
+            <ProfileCardMUI username={username} token={currentToken} variant="repos" />
           </Paper>
 
           <Paper elevation={1} sx={{ p: 2 }}>
             <Typography variant="h5" component="h3" gutterBottom>Contributions (Live)</Typography>
-            <ProfileCardMUI username={username} token={token} variant="contributions" />
+            <ProfileCardMUI username={username} token={currentToken} variant="contributions" />
           </Paper>
 
           <Paper elevation={1} sx={{ p: 2 }}>
             <Typography variant="h5" component="h3" gutterBottom>Language Usage (Live)</Typography>
-            <LanguageUsageCardMUI username={username} token={token} />
+            <LanguageUsageCardMUI username={username} token={currentToken} />
           </Paper>
 
           <Paper elevation={1} sx={{ p: 2 }}>
             <Typography variant="h5" component="h3" gutterBottom>Single Repo Example (material-ui for {username})</Typography>
             {/* Using a known repo for the mui org, or could add inputs */}
-            <SingleRepoCardMUI username={username} token={token} repoName={username === 'mui' ? 'material-ui' : 'Spoon-Knife'} />
+            <SingleRepoCardMUI username={username} token={currentToken} repoName={username === 'mui' ? 'material-ui' : 'Spoon-Knife'} />
           </Paper>
         </Stack>
       )}

@@ -18,7 +18,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --clean --sourcemap",
+    "build": "rm -f tsconfig.tsbuildinfo .tsbuildinfo && tsup --config tsup.config.ts && tsc --emitDeclarationOnly --project tsconfig.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts"
   },

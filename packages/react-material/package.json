@@ -18,7 +18,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --sourcemap --external react,react-dom,@mui/material,@emotion/react,@emotion/styled,@github-profile-cards/core,@mui/icons-material --out-dir ./dist --tsconfig ./tsconfig.json",
+    "build": "rm -f tsconfig.tsbuildinfo .tsbuildinfo && tsup --config tsup.config.ts && tsc --emitDeclarationOnly --listEmittedFiles --project tsconfig.json",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "lint": "eslint . --ext .ts,.tsx"
   },
