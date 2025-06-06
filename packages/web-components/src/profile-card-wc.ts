@@ -24,7 +24,7 @@ class ProfileCardWC extends HTMLElement {
 
   constructor() {
     super();
-    console.log('[v2 profile-card-wc] Constructor invoked.');
+    console.log('[v3 profile-card-wc] Constructor invoked.');
     this.shadow = this.attachShadow({ mode: 'open' });
     // Initial render or placeholder
     this.render();
