@@ -65,6 +65,7 @@
   </div>
 
   <script type="module">
+    console.log('[v2 web-demo] Script start.');
     // Import the web components bundle to register them
     import '@github-profile-cards/web-components';
 
@@ -153,23 +154,23 @@
     }
 
     function updateLiveCardsAttributes(username, repoName) { // Added repoName parameter
-      console.log('[web-demo] updateLiveCardsAttributes called with:', { username, repoName, token: tokenInput.value || undefined });
+      console.log('[v2 web-demo] updateLiveCardsAttributes called with:', { username, repoName, token: tokenInput.value || undefined });
       const token = tokenInput.value || undefined;
 
       document.querySelectorAll('profile-card-wc').forEach(card => {
-        console.log('[web-demo] Setting attributes for profile-card-wc:', { el: card, username, token });
+        console.log('[v2 web-demo] Setting attributes for profile-card-wc:', { el: card, username, token });
         card.setAttribute('username', username);
         if (token) card.setAttribute('token', token); else card.removeAttribute('token');
       });
       const languageCard = document.querySelector('language-usage-card-wc');
       if (languageCard) {
-        console.log('[web-demo] Setting attributes for language-usage-card-wc:', { el: languageCard, username, token });
+        console.log('[v2 web-demo] Setting attributes for language-usage-card-wc:', { el: languageCard, username, token });
         languageCard.setAttribute('username', username);
         if (token) languageCard.setAttribute('token', token); else languageCard.removeAttribute('token');
       }
       const singleRepoCard = document.querySelector('single-repo-card-wc');
       if (singleRepoCard) {
-        console.log('[web-demo] Setting attributes for single-repo-card-wc:', { el: singleRepoCard, username, repoName, token });
+        console.log('[v2 web-demo] Setting attributes for single-repo-card-wc:', { el: singleRepoCard, username, repoName, token });
         singleRepoCard.setAttribute('username', username);
         // Use the passed repoName or a default/input for repo-name
         singleRepoCard.setAttribute('repo-name', repoName || defaultRepoNameForDemo);
@@ -182,7 +183,7 @@
       // For simplicity, using a fixed repo name for live data or derive it.
       // Could add another input field for repoName if dynamic changes are needed for single repo card.
       const currentRepoName = (currentUsername === "webcomponents") ? "gold-standard" : "Spoon-Knife";
-      console.log('[web-demo] loadButton clicked. Current username:', currentUsername, 'Current repoName:', currentRepoName);
+      console.log('[v2 web-demo] loadButton clicked. Current username:', currentUsername, 'Current repoName:', currentRepoName);
       if (currentUsername === 'mockuser') {
         displayMockData();
       } else {
@@ -196,7 +197,7 @@
     });
 
     // Initial setup
-    console.log('[web-demo] Initial load. Username:', initialUsername, 'RepoName:', initialRepoName);
+    console.log('[v2 web-demo] Initial load. Username:', initialUsername, 'RepoName:', initialRepoName);
     displayLiveComponentsAndSetAttributes(initialUsername, initialRepoName);
   </script>
 </body>
