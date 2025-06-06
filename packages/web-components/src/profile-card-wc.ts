@@ -29,11 +29,13 @@ class ProfileCardWC extends HTMLElement {
   }
 
   connectedCallback() {
+    console.log('[profile-card-wc] connectedCallback. Initial attributes:', { username: this.getAttribute('username'), token: this.getAttribute('token'), variant: this.getAttribute('variant') });
     this.updateFromAttributes();
     this.fetchAndRenderData();
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+    console.log(`[profile-card-wc] attributeChangedCallback: ${name} changed from ${oldValue} to ${newValue}`);
     if (oldValue === newValue) return;
     (this as any)[`_${name}`] = newValue; // Simplified, assumes attribute name matches private field name convention
 
@@ -54,7 +56,9 @@ class ProfileCardWC extends HTMLElement {
   }
 
   private async fetchAndRenderData() {
+    console.log('[profile-card-wc] fetchAndRenderData called. State:', { username: this._username, token: this._token, variant: this._variant });
     if (!this._username) {
+      console.warn('[profile-card-wc] fetchAndRenderData: No username, rendering error.');
       this.renderError('Username attribute is required.');
       return;
     }
@@ -63,17 +67,21 @@ class ProfileCardWC extends HTMLElement {
 
     try {
       const data = await fetchGitHubData(this._username, this._token || undefined);
+      console.log('[profile-card-wc] fetchGitHubData response:', data);
       if (!data) {
+        console.warn('[profile-card-wc] fetchGitHubData returned null/undefined, rendering error.');
         this.renderError('User not found or error fetching data.');
         return;
       }
       this.render(data);
     } catch (error) {
+      console.error('[profile-card-wc] fetchGitHubData caught error:', error);
       this.renderError(error instanceof Error ? error.message : 'Unknown error occurred.');
     }
   }
 
   private renderError(message: string) {
+    console.log('[profile-card-wc] renderError called with message:', message);
     this.shadow.innerHTML = `
       <style>
         .error { color: red; border: 1px solid red; padding: 10px; }
@@ -83,6 +91,7 @@ class ProfileCardWC extends HTMLElement {
   }
 
   private renderLoading() {
+    console.log('[profile-card-wc] renderLoading called.');
     this.shadow.innerHTML = `
       <style>
         .loading { padding: 10px; }
@@ -92,6 +101,7 @@ class ProfileCardWC extends HTMLElement {
   }
 
   private render(data?: GitHubData) {
+    console.log('[profile-card-wc] render called with data:', data);
     if (!this.shadow) return;
 
     // Basic styles - can be expanded significantly
