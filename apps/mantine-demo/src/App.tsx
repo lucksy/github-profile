@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Container, TextInput, Button, Stack, Title, Paper, Group, Text, Code } from '@mantine/core';
 import { ProfileCard, LanguageUsageCard, SingleRepoCard } from '@github-profile-cards/react-mantine';
-
-// A mock token for development - replace with a real one if needed for private repo testing
-const MOCK_DEV_TOKEN = 'YOUR_GITHUB_TOKEN_HERE'; // Replace or remove for production/sharing
-const USE_MOCK_TOKEN_INFO = ' (Note: A mock token placeholder is in App.tsx. Replace it with a real PAT for testing private repo features, or ensure it is removed/handled for any public deployment.)';
+// Imports for mock data generation - keep them as they are used for 'mockuser'
+import { getProfileSummary, getGitHubMetrics, getTopRepos } from '@github-profile-cards/core';
 
 
 const mockCoreData = {
@@ -32,9 +30,10 @@ const mockCoreData = {
 
 
 function App() {
+  console.log('[v4 mantine-demo] App component rendering.');
   const [username, setUsername] = useState<string>('octocat'); // Default to 'octocat'
   const [inputValue, setInputValue] = useState<string>('octocat');
-  const [token, setToken] = useState<string | undefined>(MOCK_DEV_TOKEN === 'YOUR_GITHUB_TOKEN_HERE' ? undefined : MOCK_DEV_TOKEN);
+  const [token, setToken] = useState<string | undefined>(import.meta.env.VITE_GITHUB_TOKEN || undefined);
 
   const handleSubmit = () => {
     setUsername(inputValue);
@@ -100,8 +99,8 @@ function App() {
         <Group mt="sm">
            <Button onClick={handleUseMockUser} variant="outline">Use "mockuser"</Button>
         </Group>
-        {MOCK_DEV_TOKEN === 'YOUR_GITHUB_TOKEN_HERE' &&
-            <Text size="xs" c="dimmed" mt="xs">No development token provided. API rate limits may apply. {USE_MOCK_TOKEN_INFO}</Text>
+        {!import.meta.env.VITE_GITHUB_TOKEN &&
+            <Text size="xs" c="dimmed" mt="xs">No VITE_GITHUB_TOKEN found in .env. API rate limits may apply. Ensure VITE_GITHUB_TOKEN is set in your root .env file.</Text>
         }
       </Paper>
 
