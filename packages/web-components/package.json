@@ -6,8 +6,10 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "sideEffects": [
-    "./dist/index.js",
-    "./dist/index.mjs"
+    "./src/index.ts",
+    "./src/profile-card-wc.ts",
+    "./src/single-repo-card-wc.ts",
+    "./src/language-usage-card-wc.ts"
   ],
   "exports": {
     ".": {
