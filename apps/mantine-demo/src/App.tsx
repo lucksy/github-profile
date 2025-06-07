@@ -30,7 +30,7 @@ const mockCoreData = {
 
 
 function App() {
-  console.log('[v4 mantine-demo] App component rendering.');
+  console.log('[v5 mantine-demo] App component rendering.');
   const [username, setUsername] = useState<string>('octocat'); // Default to 'octocat'
   const [inputValue, setInputValue] = useState<string>('octocat');
   const [token, setToken] = useState<string | undefined>(import.meta.env.VITE_GITHUB_TOKEN || undefined);
